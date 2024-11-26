@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
-func RunTCPClient(ctx context.Context, rawDialAddr string, reportFn func(time.Time, int64, int64, int64, int64)) error {
-	dialAddr, err := net.ResolveTCPAddr("tcp4", rawDialAddr)
+func RunTCPClient(ctx context.Context, host string, reportFn func(time.Time, int64, int64, int64, int64)) error {
+	dialAddr, err := net.ResolveTCPAddr("tcp4", fmt.Sprintf("%s:6943", host))
 	if err != nil {
 		return err
 	}

@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
-func RunUDPClient(ctx context.Context, rawDialAddr string, reportFn func(time.Time, int64, int64, int64, int64)) error {
-	dialAddr, err := net.ResolveUDPAddr("udp4", rawDialAddr)
+func RunUDPClient(ctx context.Context, host string, reportFn func(time.Time, int64, int64, int64, int64)) error {
+	dialAddr, err := net.ResolveUDPAddr("udp4", fmt.Sprintf("%s:6943", host))
 	if err != nil {
 		return err
 	}

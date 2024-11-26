@@ -242,9 +242,9 @@ func main() {
 	// tcp clients
 	//
 
-	for _, rawDialAddr := range os.Args[1:] {
+	for _, host := range os.Args[1:] {
 		go func() {
-			friendlyRawDialAddr := strings.ReplaceAll(rawDialAddr, ".", "_")
+			friendlyRawDialAddr := strings.ReplaceAll(host, ".", "_")
 			friendlyRawDialAddr = strings.ReplaceAll(friendlyRawDialAddr, ":", "_")
 
 			sentCounter := promauto.NewCounter(prometheus.CounterOpts{Name: fmt.Sprintf("tcp_%s_sent", friendlyRawDialAddr)})
@@ -260,7 +260,7 @@ func main() {
 			}
 
 			for {
-				err := packets.RunTCPClient(ctx, rawDialAddr, reportFn)
+				err := packets.RunTCPClient(ctx, host, reportFn)
 				if err != nil {
 					log.Printf("warning: failed packets.RunTCPClient: %s", err)
 					time.Sleep(time.Second * 1)
@@ -284,9 +284,9 @@ func main() {
 	// udp clients
 	//
 
-	for _, rawDialAddr := range os.Args[1:] {
+	for _, host := range os.Args[1:] {
 		go func() {
-			friendlyRawDialAddr := strings.ReplaceAll(rawDialAddr, ".", "_")
+			friendlyRawDialAddr := strings.ReplaceAll(host, ".", "_")
 			friendlyRawDialAddr = strings.ReplaceAll(friendlyRawDialAddr, ":", "_")
 
 			sentCounter := promauto.NewCounter(prometheus.CounterOpts{Name: fmt.Sprintf("udp_%s_sent", friendlyRawDialAddr)})
@@ -302,7 +302,7 @@ func main() {
 			}
 
 			for {
-				err := packets.RunUDPClient(ctx, rawDialAddr, reportFn)
+				err := packets.RunUDPClient(ctx, host, reportFn)
 				if err != nil {
 					log.Printf("warning: failed packets.RunUDPClient: %s", err)
 					time.Sleep(time.Second * 1)
