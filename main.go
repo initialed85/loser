@@ -30,7 +30,7 @@ func main() {
 
 	networkInterfacesBodyMu := new(sync.Mutex)
 	networkInterfacesBody := []byte("{}")
-	networkInterfacesTicker := time.NewTicker(time.Second * 1)
+	networkInterfacesTicker := time.NewTicker(time.Second * 5)
 
 	countersMu := new(sync.Mutex)
 	counters := make(map[string]prometheus.Counter)
@@ -263,10 +263,18 @@ func main() {
 			}
 
 			for {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
+
 				err := packets.RunTCPClient(ctx, host, reportFn)
 				if err != nil {
 					log.Printf("warning: failed packets.RunTCPClient: %s", err)
-					time.Sleep(time.Second * 1)
+
+					// TODO: looks like a busy loop- should be fine, we've got a 1s timeout inside
+					// time.Sleep(time.Second * 1)
 				}
 			}
 		}()

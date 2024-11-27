@@ -12,14 +12,28 @@ import (
 	"time"
 )
 
-func RunTCPClient(ctx context.Context, host string, reportFn func(time.Time, int64, int64, int64, int64)) error {
+func RunTCPClient(ctx context.Context, host string, actualReportFn func(time.Time, int64, int64, int64, int64)) error {
+	mu := new(sync.Mutex)
+
+	sent := int64(0)
+	received := int64(0)
+	outOfOrder := int64(0)
+	lost := int64(0)
+
+	lastSent := int64(0)
+	lastReceived := int64(0)
+	lastOutOfOrder := int64(0)
+	lastLost := int64(0)
+
 	dialAddr, err := net.ResolveTCPAddr("tcp4", fmt.Sprintf("%s:6943", host))
 	if err != nil {
+		time.Sleep(time.Second * 1)
 		return err
 	}
 
 	conn, err := net.DialTCP("tcp4", nil, dialAddr)
 	if err != nil {
+		time.Sleep(time.Second * 1)
 		return err
 	}
 	defer func() {
@@ -29,6 +43,31 @@ func RunTCPClient(ctx context.Context, host string, reportFn func(time.Time, int
 	log.Printf("connected to TCP %s", conn.RemoteAddr())
 	defer func() {
 		log.Printf("lost connection to TCP %s", conn.RemoteAddr())
+	}()
+
+	reportFn := func() {
+		mu.Lock()
+
+		thisSent := sent - lastSent
+		thisReceived := received - lastReceived
+		thisOutOfOrder := outOfOrder - lastOutOfOrder
+		thisLost := lost - lastLost
+
+		lastSent = sent
+		lastReceived = received
+		lastOutOfOrder = outOfOrder
+		lastLost = lost
+
+		mu.Unlock()
+
+		log.Printf("UDP %s sent: %d, received: %d, outOfOrder: %d, lost: %d", conn.RemoteAddr(), thisSent, thisReceived, thisOutOfOrder, thisLost)
+		actualReportFn(time.Now(), thisSent, thisReceived, thisOutOfOrder, thisLost)
+	}
+
+	reportFn()
+
+	defer func() {
+		reportFn()
 	}()
 
 	go func() {
@@ -41,16 +80,9 @@ func RunTCPClient(ctx context.Context, host string, reportFn func(time.Time, int
 		sendTicker.Stop()
 	}()
 
-	mu := new(sync.Mutex)
-
-	sent := int64(0)
-	received := int64(0)
-	outOfOrder := int64(0)
-	lost := int64(0)
-
 	buf := make([]byte, 65536)
 
-	reportTicker := time.NewTicker(time.Second * 1)
+	reportTicker := time.NewTicker(time.Second * 5)
 	defer func() {
 		reportTicker.Stop()
 	}()
@@ -63,16 +95,7 @@ func RunTCPClient(ctx context.Context, host string, reportFn func(time.Time, int
 			case <-reportTicker.C:
 			}
 
-			mu.Lock()
-			sent := sent
-			received := received
-			outOfOrder := outOfOrder
-			lost := lost
-			mu.Unlock()
-
-			log.Printf("TCP %s sent: %d, received: %d, outOfOrder: %d, lost: %d", conn.RemoteAddr(), sent, received, outOfOrder, lost)
-
-			reportFn(time.Now(), sent, received, outOfOrder, lost)
+			reportFn()
 		}
 	}()
 
@@ -84,7 +107,7 @@ func RunTCPClient(ctx context.Context, host string, reportFn func(time.Time, int
 		}
 
 		now := time.Now()
-		expiry := now.Add(time.Millisecond * 10)
+		expiry := now.Add(time.Second * 1)
 
 		err = conn.SetWriteDeadline(expiry)
 		if err != nil {
