@@ -53,6 +53,22 @@ func RunTCPClient(ctx context.Context, host string, actualReportFn func(time.Tim
 		thisOutOfOrder := outOfOrder - lastOutOfOrder
 		thisLost := lost - lastLost
 
+		if lastSent == 0 {
+			thisSent = 0
+		}
+
+		if lastReceived == 0 {
+			thisReceived = 0
+		}
+
+		if lastOutOfOrder == 0 {
+			thisOutOfOrder = 0
+		}
+
+		if lastLost == 0 {
+			thisLost = 0
+		}
+
 		lastSent = sent
 		lastReceived = received
 		lastOutOfOrder = outOfOrder
