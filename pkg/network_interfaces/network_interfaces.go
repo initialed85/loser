@@ -2,6 +2,7 @@ package network_interfaces
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -42,7 +43,13 @@ type NetworkInterface struct {
 	TxWindowErrors    int64     `json:"tx_window_errors"`
 }
 
-var relevantSysClassNetItems = []string{"address", "ifindex", "mtu", "speed"}
+var relevantSysClassNetItems = []string{
+	"address",
+	"ifindex",
+	"mtu",
+	// TODO: speed not reliable on all drivers it seems
+	// "speed",
+}
 
 func GetNetworkInterfaces() ([]NetworkInterface, error) {
 	sysClassNetDirEntries, err := os.ReadDir("/sys/class/net")
@@ -57,7 +64,10 @@ func GetNetworkInterfaces() ([]NetworkInterface, error) {
 
 		statsDirEntries, err := os.ReadDir(filepath.Join("/sys/class/net", sysClassNetDirEntry.Name(), "statistics"))
 		if err != nil {
-			return nil, fmt.Errorf("failed os.ReadDir for statsDirEntries: %s", err)
+			// TODO: not everything has stats apparently
+			// return nil, fmt.Errorf("failed os.ReadDir for statsDirEntries: %s", err)
+			log.Printf("warning: %s", fmt.Errorf("failed os.ReadDir for statsDirEntries: %s", err))
+			continue
 		}
 
 		items := make(map[string]string)
@@ -87,10 +97,11 @@ func GetNetworkInterfaces() ([]NetworkInterface, error) {
 			return nil, fmt.Errorf("failed strconv.ParseInt for mtu: %#+v: %s", items["mtu"], err)
 		}
 
-		speed, err := strconv.ParseInt(items["speed"], 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("failed strconv.ParseInt for speed: %#+v: %s", items["speed"], err)
-		}
+		// TODO: speed not reliable on all drivers it seems
+		// speed, err := strconv.ParseInt(items["speed"], 10, 64)
+		// if err != nil {
+		// 	return nil, fmt.Errorf("failed strconv.ParseInt for speed: %#+v: %s", items["speed"], err)
+		// }
 
 		networkInterface := NetworkInterface{
 			Timestamp: now,
@@ -98,7 +109,8 @@ func GetNetworkInterfaces() ([]NetworkInterface, error) {
 			MAC:       items["address"],
 			IFIndex:   int(ifIndex),
 			MTU:       int(mtu),
-			Speed:     int(speed),
+			// TODO: speed not reliable on all drivers it seems
+			// Speed:     int(speed),
 		}
 
 		stats := make(map[string]int64)
