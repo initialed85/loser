@@ -2,12 +2,23 @@ package network_interfaces
 
 import (
 	"fmt"
-	"log"
+	_log "log"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+)
+
+var log = _log.New(
+	os.Stdout,
+	"loser: ",
+	_log.Ldate|
+		_log.Ltime|
+		_log.Lmicroseconds|
+		_log.LUTC|
+		_log.Lmsgprefix|
+		_log.LstdFlags,
 )
 
 type NetworkInterface struct {
@@ -66,7 +77,9 @@ func GetNetworkInterfaces() ([]NetworkInterface, error) {
 		if err != nil {
 			// TODO: not everything has stats apparently
 			// return nil, fmt.Errorf("failed os.ReadDir for statsDirEntries: %s", err)
-			log.Printf("warning: %s", fmt.Errorf("failed os.ReadDir for statsDirEntries: %s", err))
+
+			// TODO: keeping the noise down for this common and unimportant failure
+			// log.Printf("warning: %s", fmt.Errorf("failed os.ReadDir for statsDirEntries: %s", err))
 			continue
 		}
 

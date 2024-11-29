@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"strconv"
 	"sync"
@@ -76,7 +75,8 @@ func RunUDPClient(ctx context.Context, host string, actualReportFn func(time.Tim
 
 		mu.Unlock()
 
-		log.Printf("UDP %s sent: %d, received: %d, outOfOrder: %d, lost: %d", conn.RemoteAddr(), thisSent, thisReceived, thisOutOfOrder, thisLost)
+		// TODO: keeping the noise down
+		// log.Printf("UDP %s sent: %d, received: %d, outOfOrder: %d, lost: %d", conn.RemoteAddr(), thisSent, thisReceived, thisOutOfOrder, thisLost)
 		actualReportFn(time.Now(), thisSent, thisReceived, thisOutOfOrder, thisLost)
 	}
 

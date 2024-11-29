@@ -2,7 +2,6 @@ package network_interfaces
 
 import (
 	"encoding/json"
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/require"
