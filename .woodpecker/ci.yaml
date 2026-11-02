@@ -1,0 +1,20 @@
+# The packet-loss tool. The gate is fmt, vet and the tests, on the go.mod line (1.23.2).
+#
+# pkg/packets' test used to fail because it passed "127.0.0.1:6943" to RunTCPClient, whose contract is a
+# *host* (tcp_client.go:27 appends :6943 itself) — the dial address came out as 127.0.0.1:6943:6943.
+# main.go passes a bare host, so the test was the bug. It takes 5 s because the test waits for the
+# report ticker.
+steps:
+  - name: test
+    image: docker.io/library/golang:1.23
+    commands:
+      - go version
+      - gofmt -l .
+      - test -z "$(gofmt -l .)"
+      - go vet ./...
+      - go test -count=1 ./...
+
+when:
+  - event: push
+    branch: master
+  - event: pull_request

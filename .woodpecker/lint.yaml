@@ -1,0 +1,27 @@
+# The lint gate for every repository on this Woodpecker. Copy this file to `<repo>/.woodpecker/lint.yaml`
+# and change nothing: it is the whole gate, and it is verified by the image it runs (the plugin lints its
+# own shipped template, and `hack/check-woodpecker-config.py --self-test` lints this file).
+#
+# `skip_clone: true` is deliberate. A lint step needs the handful of bytes under `.woodpecker/`, and the
+# server's clone step hands a *build* the whole tree: plugin-git is pulled with ImagePullPolicy=Always
+# and fetches history nobody here reads. The plugin instead fetches the commit it is judging itself, with
+# the netrc the compiler injects into the steps of a `trusted.security` repository
+# (pipeline/frontend/yaml/compiler/compiler.go:258 -> CI_NETRC_MACHINE/_USERNAME/_PASSWORD), so there is
+# no per-repository clone recipe to copy, no token in a process argument list, and no log line to scrub.
+#
+# No `settings:` either: the plugin reads this repository's real trust flags from CI_REPO_TRUSTED_*
+# (pipeline/frontend/metadata/environment.go:64-68) instead of being told them, so a workflow cannot
+# claim trust it does not have. Override with PLUGIN_TRUSTED only to lint a tree outside Woodpecker.
+#
+# This needs the repo to be trusted.security, which every app repo on home-dev is; if a repo is not, the
+# clone falls back to an unauthenticated fetch (fine for public repos, a clear git error for private ones).
+skip_clone: true
+
+steps:
+  - name: lint-workflows
+    image: docker.io/initialed85/wp-woodpecker-lint:latest
+
+when:
+  - event:
+      - push
+      - pull_request
